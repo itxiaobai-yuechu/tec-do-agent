@@ -53,7 +53,6 @@ def get_help_model(
             logger.error(f"未知模型: {model_name}")
     except Exception as e:
         logger.error(e)
-    logger.info(msg)
     # presudo_key = hide_middle_chars(access_key)
     if model is None:
         model = AzureOpenAIClient(
@@ -64,6 +63,8 @@ def get_help_model(
             deployment_name=conf.get("default_help_model.deployment_name", ""),
             api_version=conf.get("default_help_model.api_version", ""),
         )
+        model_name = conf.get("default_help_model.model_name", "")
+    logger.info(msg)
     return model
 
 

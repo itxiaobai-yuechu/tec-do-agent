@@ -447,27 +447,25 @@ with gr.Blocks(theme=small_and_beautiful_theme) as demo:
                     visible=False, elem_classes="invisible-btn", elem_id="history-select-btn")  # Not used
 
     # TODO : 应用加载后的第一个程序
-    # def load_app(request: gr.Request):
-    #     # if hasattr(request, "username") and request.username:
-    #     #     logger.info(f"Get User Name: {request.username}")
-    #     #     user_info, user_name = gr.Markdown.update(
-    #     #         value=f"User: {request.username}"), request.username
-    #     # else:
-    #     #     user_info, user_name = gr.Markdown.update(
-    #     #         value=f"", visible=False), ""
+    def load_app(request: gr.Request):
+        # if hasattr(request, "username") and request.username:
+        #     logger.info(f"Get User Name: {request.username}")
+        #     user_info, user_name = gr.Markdown.update(
+        #         value=f"User: {request.username}"), request.username
+        # else:
+        #     user_info, user_name = gr.Markdown.update(
+        #         value=f"", visible=False), ""
 
-    #     # 通过request获取用户信息,聊天记录。。。
-    #     user_name = "tec-do"
-    #     user_info = "tec-do"
-    #     # 通过配置获取模型信息
-    #     model_name = conf.get("help_model.model_name", "")
-    #     api_key = conf.get("help_model.api_key", "")
-    #     base_url = conf.get("help_model.base_url", "")
-    #     current_help_model = get_help_model(
-    #         model_name=model_name)
-    #     return user_info, user_name, current_help_model,
-    # demo.load(load_app, inputs=None, outputs=[
-    #     user_info, user_name, current_help_model], api_name="load")
+        # 通过request获取用户信息,聊天记录。。。
+        user_name = "tec-do"
+        user_info = "tec-do"
+        # 通过配置获取模型信息
+        model_name = conf.get("help_model.model_name", "")
+        current_help_model = get_help_model(
+            model_name=model_name, user_name=user_name)
+        return user_info, user_name, current_help_model,
+    demo.load(load_app, inputs=None, outputs=[
+        user_info, user_name, current_help_model], api_name="load")
 
     chatgpt_predict_args = dict(
         fn=predict,

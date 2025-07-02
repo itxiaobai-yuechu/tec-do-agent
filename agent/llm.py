@@ -4,7 +4,7 @@ from vertexai.generative_models import GenerativeModel, Part, GenerationConfig
 import vertexai
 from config import logger
 from openai import OpenAI
-from config import config
+from agent.config import conf
 from langchain.chat_models import init_chat_model
 from langchain.prompts import SystemMessagePromptTemplate, ChatPromptTemplate
 
@@ -56,7 +56,7 @@ def chat_with_openai_in_azure_with_template(system_prompt_template: str, **kwarg
 
 def chat_with_gemini_in_vertexai(system_prompt: str, prompt: str) -> str:
     credentials = service_account.Credentials.from_service_account_file(
-        filename=config.get('gemini_conf'))
+        filename=conf.get('gemini_conf'))
     vertexai.init(project='ca-biz-vypngh-y97n', credentials=credentials)
     multimodal_model = GenerativeModel(
         model_name="gemini-2.5-flash-preview-04-17",
@@ -91,5 +91,5 @@ def translate_with_gemini_in_vertexai(context: str) -> str:
 def generate_embedding_with_openai(text: str) -> list[float]:
     query_vectors = [
         vec.embedding
-        for vec in OpenAI(api_key=config.get('openai_api_key'), base_url=config.get('openai_api_base')).embeddings.create(input=text, model=config.get('openai_embedding_model')).data]
+        for vec in OpenAI(api_key=conf.get('openai_api_key'), base_url=conf.get('openai_api_base')).embeddings.create(input=text, model=config.get('openai_embedding_model')).data]
     return query_vectors[0]

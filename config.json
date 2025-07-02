@@ -2,7 +2,7 @@
     "openai_api_key": "sk-NNnhRUi2gAuWV1GcEosAfvUlc5CYYPGsw9sP87TgM8U3qOT8",
     "openai_api_base": "https://api.nuwaapi.com/v1",
     "openai_embedding_model": "text-embedding-ada-002",
-    "gemini_conf": "agent/gemini_conf.json",
+    "gemini_conf": "./agent/gemini_conf.json",
     "language": "auto",
     "hide_history_when_not_logged_in": true,
     "default_model": "gpt-3.5-turbo",
@@ -11,7 +11,7 @@
     "server_port": 6006,
     "autobrowser": true,
     "share": true,
-    "log_dir": "/root/dzj/ad_agent/ad_agent_lg/frontend/log",
+    "log_dir": "./log",
     "default_help_model": {
         "model_name": "gpt-3.5-turbo",
         "api_key": "sk-NNnhRUi2gAuWV1GcEosAfvUlc5CYYPGsw9sP87TgM8U3qOT8",
