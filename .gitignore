@@ -1,1 +1,4 @@
+agent/*
 agent/gemini_conf.json
+test.py
+history/*

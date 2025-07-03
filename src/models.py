@@ -24,7 +24,6 @@ def get_help_model(
         model_name: str,
         user_name: str,
 ):
-    msg = i18n("模型设置为了：") + f" {model_name}"
     model_type = ModelType.get_type(model_name)
     model = None
     try:
@@ -58,12 +57,13 @@ def get_help_model(
         model = AzureOpenAIClient(
             api_key=conf.get("default_help_model.api_key", ""),
             user_name=user_name,
-            azure_endpoint=conf.get("default_help_model.base_url", ""),
+            azure_endpoint=conf.get("default_help_model.azure_endpoint", ""),
             model=conf.get("default_help_model.model_name", ""),
             deployment_name=conf.get("default_help_model.deployment_name", ""),
             api_version=conf.get("default_help_model.api_version", ""),
         )
         model_name = conf.get("default_help_model.model_name", "")
+    msg = i18n("模型设置为了：") + f" {model_name}"
     logger.info(msg)
     return model
 

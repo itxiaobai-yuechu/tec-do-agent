@@ -19,7 +19,7 @@ from src.utils import (
     i18n,
     construct_assistant,
     construct_user,
-    save_file,
+    save_chat_history_util,
     hide_middle_chars,
     count_token,
     new_auto_history_filename,
@@ -38,25 +38,27 @@ from src.utils import (
 class BaseClient:
     def __init__(self, user_name):
         self.user_name = user_name
+        self.history_file_path = get_first_history_name(user_name)
+    # 在auto_name_chat_history内
 
-    def rename_chat_history(self, filename, chatbot):
-        if filename == "":
-            return gr.update()
-        if not filename.endswith(".json"):
-            filename += ".json"
-        self.delete_chat_history(self.history_file_path)
+    def save_chat_history(self, filename_without_json, chatbot):
+        # chatbot ->原始chatbot,此时的filename without json
+        # TODO 发生重复现象则使用number_filename来避免重复，历史对话标题通过文件中的内容来获取
+
         # 命名重复检测
-        repeat_file_index = 2
-        full_path = os.path.join(HISTORY_DIR, self.user_name, filename)
-        while os.path.exists(full_path):
-            full_path = os.path.join(
-                HISTORY_DIR, self.user_name, f"{repeat_file_index}_{filename}"
-            )
-            repeat_file_index += 1
-        filename = os.path.basename(full_path)
-
-        self.history_file_path = filename
-        save_file(filename, self, chatbot)
+        # full_path = os.path.join(
+        #     HISTORY_DIR, self.user_name, f"{filename_without_json}.json")
+        # repeat_file_index = 2
+        # while os.path.exists(full_path):
+        #     full_path = os.path.join(
+        #         HISTORY_DIR, self.user_name, f"{repeat_file_index}_{filename_without_json}.json"
+        #     )
+        #     repeat_file_index += 1
+        # filename = os.path.basename(full_path)
+        # self.history_file_path = filename
+        save_chat_history_util(chatbot, self.user_name,
+                               f"{filename_without_json}.json", filename_without_json)
+        # 对应historySelectList
         return init_history_list(self.user_name)
 
     def delete_chat_history(self, filename):

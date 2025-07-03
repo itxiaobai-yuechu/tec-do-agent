@@ -8,14 +8,13 @@
     "default_model": "gpt-3.5-turbo",
     "multi_api_key": false,
     "server_name": "0.0.0.0",
-    "server_port": 6006,
+    "server_port": 6007,
     "autobrowser": true,
     "share": true,
     "log_dir": "./log",
     "default_help_model": {
-        "model_name": "gpt-3.5-turbo",
-        "api_key": "sk-NNnhRUi2gAuWV1GcEosAfvUlc5CYYPGsw9sP87TgM8U3qOT8",
-        "base_url": "https://api.nuwaapi.com/v1",
+        "model_name": "gpt-4o-mini",
+        "api_key": "0c7cf81130b7479f9391b327b2a1717f",
         "azure_endpoint": "https://tecdoai-sweden-02.openai.azure.com",
         "deployment_name": "tecdoai-sweden-02-gpt4o-mini",
         "api_version": "2024-08-01-preview"

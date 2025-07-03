@@ -45,7 +45,7 @@ from src.utils import (
     i18n,
     construct_assistant,
     construct_user,
-    save_file,
+    # save_file,
     hide_middle_chars,
     count_token,
     new_auto_history_filename,

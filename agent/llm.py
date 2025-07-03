@@ -2,10 +2,9 @@ from langchain_openai import AzureChatOpenAI
 from google.oauth2 import service_account
 from vertexai.generative_models import GenerativeModel, Part, GenerationConfig
 import vertexai
+from agent.config import conf
 from config import logger
 from openai import OpenAI
-from agent.config import conf
-from langchain.chat_models import init_chat_model
 from langchain.prompts import SystemMessagePromptTemplate, ChatPromptTemplate
 
 

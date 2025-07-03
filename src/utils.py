@@ -98,11 +98,9 @@ def extract_chat_history(chatbot) -> List[List[str]]:
 
 def predict(user_question: str, chatbot, use_streaming_checkbox, language_select_dropdown):
     # TODO 提取chatbot中的对话内容
-    print(user_question, chatbot, use_streaming_checkbox, language_select_dropdown)
-
     # 提取纯文本对话历史
     chat_history = extract_chat_history(chatbot)
-    print(chat_history)
+    # TODO 使用agent来进行回复
     chatbot += [(user_question, chat_with_openai_in_azure(
         system_prompt=f"用{language_select_dropdown}回答用户的问题", prompt=user_question))]
     return chatbot
@@ -129,11 +127,6 @@ def interrupt(current_model, *args):
     return current_model.interrupt(*args)
 
 
-def reset(current_model, *args):
-    if current_model:
-        return current_model.reset(*args)
-
-
 def retry(current_model, *args):
     iter = current_model.retry(*args)
     for i in iter:
@@ -156,9 +149,13 @@ def rename_chat_history(current_model, *args):
     return current_model.rename_chat_history(*args)
 
 
-def auto_name_chat_history(current_model, *args):
-    if current_model:
-        return current_model.auto_name_chat_history(*args)
+def auto_name_chat_history(current_help_model, *args):
+    # TODO 输出是historySelectList
+    # 只有第一次才需要对对话进行命名
+    if current_help_model:
+        return current_help_model.auto_name_chat_history(*args)
+    else:
+        logger.error("current_help_model is None")
 
 
 def export_markdown(current_model, *args):
@@ -396,7 +393,7 @@ def escape_markdown(text):
         "\n": "<br>",
     }
     text = text.replace("    ", "&nbsp;&nbsp;&nbsp;&nbsp;")
-    return "".join(escape_chars.get(c, c) for c in text)
+    return "".join(escape_chars.get(c, c) or c for c in text)
 
 
 def convert_asis(userinput):  # deprecated
@@ -442,57 +439,87 @@ def construct_system(text):
 def construct_assistant(text):
     return construct_text("assistant", text)
 
+# 保存聊天记录
 
-def save_file(filename, model, chatbot):
-    system = model.system_prompt
-    history = model.history
-    user_name = model.user_name
-    os.makedirs(os.path.join(HISTORY_DIR, user_name), exist_ok=True)
-    if filename is None:
-        filename = new_auto_history_filename(user_name)
-    if filename.endswith(".md"):
-        filename = filename[:-3]
-    if not filename.endswith(".json") and not filename.endswith(".md"):
+
+def auto_increase_filename(dir_path):
+    """
+    获取dir_path下最大的history id 并且+1，假如创建文件时报错，则+1重试直到创建成功
+
+    Args:
+        dir_path: 目录路径
+
+    Returns:
+        str: 生成的文件名（不包含扩展名）
+    """
+    # 确保目录存在
+    os.makedirs(dir_path, exist_ok=True)
+
+    # 获取目录下所有.json文件
+    history_files = get_file_names_by_type(dir_path, [".json"])
+
+    # 提取文件名（不含扩展名）
+    history_names = [f[:f.rfind(".")]
+                     for f in history_files if f.endswith(".json")]
+
+    # 查找最大的数字ID
+    max_id = 0
+    for name in history_names:
+        # 尝试从文件名中提取数字ID
+        # 支持多种格式：纯数字、带前缀的数字等
+        import re
+        number_match = re.search(r'(\d+)', name)
+        if number_match:
+            try:
+                current_id = int(number_match.group(1))
+                max_id = max(max_id, current_id)
+            except ValueError:
+                continue
+
+    # 从最大ID+1开始尝试
+    current_id = max_id + 1
+
+    # 尝试创建文件名，如果冲突则递增
+    while True:
+        # 生成新的文件名
+        new_filename = f"{current_id}"
+
+        # 检查文件是否已存在
+        file_path = os.path.join(dir_path, f"{new_filename}.json")
+
+        if not os.path.exists(file_path):
+            # 尝试创建文件来验证是否可用
+            try:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write('')  # 创建空文件
+                # 如果成功创建，删除测试文件并返回文件名
+                return file_path
+            except (OSError, IOError) as e:
+                logger.warning(f"无法创建文件 {file_path}: {e}")
+                # 如果创建失败，继续尝试下一个ID
+                current_id += 1
+                continue
+        else:
+            # 文件已存在，尝试下一个ID
+            current_id += 1
+
+# 保存文件
+
+
+def save_chat_history_util(chatbot, user_name, filename, dialogue_title):
+    # filename必须要以json结尾，不是则换为json
+    if not filename.endswith(".json"):
         filename += ".json"
-    if filename == ".json":
-        raise Exception("文件名不能为空")
+    history_file_path = os.path.join(HISTORY_DIR, user_name, filename)
 
-    json_s = {
-        "system": system,
-        "history": history,
-        "chatbot": chatbot,
-        "model_name": model.model_name,
-        "single_turn": model.single_turn,
-        "temperature": model.temperature,
-        "top_p": model.top_p,
-        "n_choices": model.n_choices,
-        "stop_sequence": model.stop_sequence,
-        "token_upper_limit": model.token_upper_limit,
-        "max_generation_token": model.max_generation_token,
-        "presence_penalty": model.presence_penalty,
-        "frequency_penalty": model.frequency_penalty,
-        "logit_bias": model.logit_bias,
-        "user_identifier": model.user_identifier,
-        "metadata": model.metadata,
+    # 如果文件存在也能覆盖写入
+    json_data = {
+        "dialogue_title": dialogue_title,
+        "history": get_history_from_chatbot(chatbot),
     }
-    if not filename == os.path.basename(filename):
-        history_file_path = filename
-    else:
-        history_file_path = os.path.join(HISTORY_DIR, user_name, filename)
-
     with open(history_file_path, "w", encoding="utf-8") as f:
-        json.dump(json_s, f, ensure_ascii=False, indent=4)
-
-    filename = os.path.basename(filename)
-    filename_md = filename[:-5] + ".md"
-    md_s = f"system: \n- {system} \n"
-    for data in history:
-        md_s += f"\n{data['role']}: \n- {data['content']} \n"
-    with open(
-            os.path.join(HISTORY_DIR, user_name, filename_md), "w", encoding="utf8"
-    ) as f:
-        f.write(md_s)
-    return os.path.join(HISTORY_DIR, user_name, filename)
+        json.dump(json_data, f, ensure_ascii=False, indent=4)
+    return history_file_path
 
 
 def sorted_by_pinyin(list):
@@ -557,6 +584,7 @@ def get_history_list(user_name=""):
 
 
 def init_history_list(user_name="", prepend=""):
+    # TODO 改善
     history_names = get_history_names(user_name)
     if prepend and prepend not in history_names:
         history_names.insert(0, prepend)
@@ -890,6 +918,8 @@ def auth_from_conf(username, password):
 def get_files_hash(file_src=None, file_paths=None):
     if file_src:
         file_paths = [x.name for x in file_src]
+    if file_paths is None:
+        file_paths = []
     file_paths.sort(key=lambda x: os.path.basename(x))
 
     md5_hash = hashlib.md5()
@@ -971,7 +1001,8 @@ class SetupWizard:
         language = input(
             '请问是否需要更改语言？可选："auto", "zh_CN", "en_US", "ja_JP", "ko_KR", "sv_SE", "ru_RU", "vi_VN"\nChange the language? Options: "auto", "zh_CN", "en_US", "ja_JP", "ko_KR", "sv_SE", "ru_RU", "vi_VN"\n目前正在使用中文(zh_CN)\nCurrently using Chinese(zh_CN)\n如果需要，请输入你想用的语言的代码：\nIf you need, please enter the code of the language you want to use:')
         if language.lower() in ["auto", "zh_cn", "en_us", "ja_jp", "ko_kr", "sv_se", "ru_ru", "vi_vn"]:
-            i18n.change_language(language)
+            # 设置环境变量来改变语言
+            os.environ["LANGUAGE"] = language
         else:
             print(
                 "你没有输入有效的语言代码，将使用默认语言中文(zh_CN)\nYou did not enter a valid language code, the default language Chinese(zh_CN) will be used.")
@@ -1385,3 +1416,14 @@ def set_language_by_country(country: str) -> str:
         "HK": "en",
     }
     return language_map.get(country, "en")
+
+
+def get_history_from_chatbot(chatbot):
+    # 如果chatbot的原始包含<div>则需要先进行处理，否则直接返回
+    chat_history = []
+    for message_pair in chatbot:
+        user_message = html_to_text(message_pair[0])
+        bot_message = html_to_text(message_pair[1])
+        chat_history.append([user_message, bot_message])
+
+    return chat_history

@@ -44,12 +44,12 @@ var currentTime = new Date().getTime();
 let windowWidth = window.innerWidth; // 初始窗口宽度
 
 function addInit() {
-    var needInit = { chatbotIndicator, uploaderIndicator };
+    var needInit = { chatbotIndicator };
 
     chatbotIndicator = gradioApp().querySelector('#tecdo-chatbot > div.wrap');
     uploaderIndicator = gradioApp().querySelector('#upload-index-file > div[data-testid="block-label"]');
-    chatListIndicator = gradioApp().querySelector('#history-select-dropdown > div.wrap');
-
+    chatListIndicator = gradioApp().querySelector('#history-select-dropdown div:nth-of-type(2)');
+    // TODO 这里出问题了
     for (let elem in needInit) {
         if (needInit[elem] == null) {
             // addInited = false;
@@ -58,7 +58,9 @@ function addInit() {
     }
 
     chatbotObserver.observe(chatbotIndicator, { attributes: true, childList: true, subtree: true });
-    chatListObserver.observe(chatListIndicator, { attributes: true });
+    // chatListObserver.observe(chatListIndicator, { attributes: true, childList: true, subtree: true });
+    // setChatList();
+    setChatList();
     setUploader();
     setPasteUploader();
     setDragUploader();

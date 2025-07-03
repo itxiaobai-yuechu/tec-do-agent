@@ -4,6 +4,7 @@
 @description: 
 """
 
+from src.utils import extract_chat_history
 from src.base_client import BaseClient
 from agent.llm import chat_once
 import base64
@@ -92,32 +93,40 @@ class AzureOpenAIClient(BaseClient):
             deployment_name=deployment_name,
             api_version=api_version,
         )
-        self.history = []
 
-    def auto_name_chat_history(self, name_chat_method, user_question, chatbot, single_turn_checkbox):
+    def invoke(self, input):
+        return self.model.invoke(input)
+
+    def auto_name_chat_history(self, name_chat_method, chatbot, single_turn_checkbox):
         """返回一个字符串"""
-        if len(self.history) == 2 and not single_turn_checkbox and not config.hide_history_when_not_logged_in:
+        if len(chatbot) > 0 and not single_turn_checkbox and ((self.user_name is not None and self.user_name != "") or not config.hide_history_when_not_logged_in):
             # 使用第一次询问与回答后的内容进行总结
-            user_question = self.history[0]["content"]
-            if name_chat_method == i18n("模型自动总结（消耗tokens）"):
-                ai_answer = self.history[1]["content"]
-                try:
-                    # 进行内容总结
-                    content = chat_once(self.model, SUMMARY_CHAT_SYSTEM_PROMPT,
-                                        f"Please write a title based on the following conversation:\n---\nUser: {user_question}\nAssistant: {ai_answer}")
-                    filename = replace_special_symbols(content) + ".json"
-                except Exception as e:
-                    logger.info(f"自动命名失败。{e}")
-                    filename = replace_special_symbols(user_question)[
-                        :16] + ".json"
-                return self.rename_chat_history(filename, chatbot)
-            elif name_chat_method == i18n("第一条提问"):
-                filename = replace_special_symbols(user_question)[
-                    :16] + ".json"
-                return self.rename_chat_history(filename, chatbot)
-            else:
-                return gr.update()
+            chat_history = extract_chat_history(chatbot)
+            user_question = chat_history[0][0]
+            ai_answer = chat_history[0][1]
+            if name_chat_method == i18n("模型自动总结"):
+                # 进行内容总结
+                content = chat_once(self.model, SUMMARY_CHAT_SYSTEM_PROMPT,
+                                    f"Please write a title based on the following conversation:\n---\nUser: {user_question}\nAssistant: {ai_answer}")
+                # 创建对应存放历史对话的文件
+                filename = replace_special_symbols(content)
+
+                return self.save_chat_history(filename, chatbot)
+
+                # filename = replace_special_symbols(content) + ".json"
+            #     filename = replace_special_symbols(user_question)[
+            #         :16] + ".json"
+            #     return self.rename_chat_history(filename, chatbot)
+            # elif name_chat_method == i18n("第一条提问"):
+            #     filename = replace_special_symbols(user_question)[
+            #         :16] + ".json"
+            #     return self.rename_chat_history(filename, chatbot)
+            # else:
+            #     return gr.update()
+
         else:
+            # 使用日期
+
             return gr.update()
 
 
@@ -310,7 +319,7 @@ class OpenAIClient(BaseClient):
     # def auto_name_chat_history(self, name_chat_method, user_question, chatbot, single_turn_checkbox):
     #     if len(self.history) == 2 and not single_turn_checkbox and not config.hide_history_when_not_logged_in:
     #         user_question = self.history[0]["content"]
-    #         if name_chat_method == i18n("模型自动总结（消耗tokens）"):
+    #         if name_chat_method == i18n("模型自动总结"):
     #             ai_answer = self.history[1]["content"]
     #             try:
     #                 history = [
