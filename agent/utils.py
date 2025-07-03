@@ -4,12 +4,15 @@ import time
 import random
 
 
-def crawl_with_requests(url, selector):
+def crawl_with_requests(url, selector, is_deep=False):
     """根据url和selector爬取页面内容
 
     Args:
         url (str): 要爬取的网页URL
         selector (str): CSS选择器，用于定位要提取的内容
+        is_deep (bool): 是否深度爬取
+            - False: 只获取当前selector下的直接文本内容
+            - True: 获取当前selector下的所有内容，包括子节点
 
     Returns:
         list: 匹配选择器的元素内容列表，如果失败返回空列表
@@ -44,8 +47,14 @@ def crawl_with_requests(url, selector):
         # 提取元素内容
         results = []
         for element in elements:
-            # 获取文本内容，去除多余空白
-            text = element.get_text(strip=True)
+            if is_deep:
+                # 深度模式：获取所有内容，包括子节点
+                text = element.get_text(strip=True)
+            else:
+                # 浅度模式：只获取直接文本内容，不包含子节点
+                direct_texts = element.find_all(text=True, recursive=False)
+                text = ''.join(str(t) for t in direct_texts).strip()
+
             if text:  # 只添加非空内容
                 results.append(text)
 

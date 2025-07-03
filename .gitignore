@@ -2,3 +2,8 @@
 agent/gemini_conf.json
 test.py
 history/*
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
